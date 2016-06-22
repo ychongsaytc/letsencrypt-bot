@@ -68,9 +68,6 @@ mkdir -p "$tmp_dir"
 fLog '==> Downloading Let’s Encrypt Authority X3';
 curl -Ls 'https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem' > "$tmp_dir/intermediate.pem"
 
-fLog '==> Downloading ISRG Root X1';
-curl -Ls 'https://letsencrypt.org/certs/isrgrootx1.pem' > "$tmp_dir/root.pem"
-
 fLog '==> Downloading acme-tiny';
 curl -Ls 'https://raw.githubusercontent.com/diafygi/acme-tiny/master/acme_tiny.py' > "$tmp_dir/acme_tiny.py"
 
@@ -93,7 +90,7 @@ mkdir -p "$acme_dir"
 python "$tmp_dir/acme_tiny.py" --account-key './account.key' --csr "$working_dir/$1.csr" --acme-dir "$acme_dir" > "$working_dir/$1.crt"
 
 fLog '==> Merging certificates';
-cat "$working_dir/$1.crt" "$tmp_dir/intermediate.pem" "$tmp_dir/root.pem" > "$working_dir/ssl-bundle.crt"
+cat "$working_dir/$1.crt" "$tmp_dir/intermediate.pem" > "$working_dir/ssl-bundle.crt"
 
 fLog '==> Cleaning up';
 rm -rf "$tmp_dir"
