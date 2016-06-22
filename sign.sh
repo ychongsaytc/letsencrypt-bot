@@ -33,10 +33,18 @@ function fLog()
 if [ -n "$4" ]; then
 	openssl_cnf_path='/etc/ssl/openssl.cnf'
 	if [ ! -f $openssl_cnf_path ]; then
+		openssl_cnf_path='/etc/openssl/openssl.cnf'
+	fi
+	if [ ! -f $openssl_cnf_path ]; then
+		openssl_cnf_path='/etc/pki/tls/openssl.cnf'
+	fi
+	if [ ! -f $openssl_cnf_path ]; then
 		openssl_cnf_path='/usr/local/etc/openssl/openssl.cnf'
-	elif [ ! -f $openssl_cnf_path ]; then
+	fi
+	if [ ! -f $openssl_cnf_path ]; then
 		openssl_cnf_path='/System/Library/OpenSSL/openssl.cnf'
-	elif [ ! -f $openssl_cnf_path ]; then
+	fi
+	if [ ! -f $openssl_cnf_path ]; then
 		fLog '==> Cannot locate openssl.cnf';
 		exit 0;
 	fi
