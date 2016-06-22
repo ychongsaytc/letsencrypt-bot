@@ -36,6 +36,9 @@ if [ -n "$4" ]; then
 		openssl_cnf_path='/etc/openssl/openssl.cnf'
 	fi
 	if [ ! -f $openssl_cnf_path ]; then
+		openssl_cnf_path='/usr/lib/ssl/openssl.cnf'
+	fi
+	if [ ! -f $openssl_cnf_path ]; then
 		openssl_cnf_path='/etc/pki/tls/openssl.cnf'
 	fi
 	if [ ! -f $openssl_cnf_path ]; then
