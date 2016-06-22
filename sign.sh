@@ -5,10 +5,20 @@ if [ "$#" -lt 3 ]; then
 Usage: sign.sh <Name> <Subject> <WebRoot> [SubjectAltName]
 
 Parameters:
- - Name           "example_com"
- - Subject        "/C=AU/ST=Some-State/L=Some-City/O=A-Company/OU=A-Section/CN=example.com"
- - WebRoot        "/var/www/example_com/public"
- - SubjectAltName "DNS:example.com,DNS:www.example.com,DNS:sub.example.com"
+
+ - Name           A slug name to specify current signing
+                  eg. "example_com"
+
+ - Subject        Subject name for the request
+                  eg. "/C=AU/ST=Some-State/L=Some-City/O=A-Company/OU=A-Section/CN=example.com"
+
+ - WebRoot        The web root directory to put HTTP resource for domain verification
+                  eg. "/var/www/example_com/public"
+
+ - SubjectAltName The Subject Alternative Name for the request
+                  eg. "DNS:example.com,DNS:www.example.com,DNS:sub.example.com"
+
+Read more: https://github.com/ychongsaytc/letsencrypt-bot
 '
 	exit 0;
 fi
