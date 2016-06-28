@@ -51,46 +51,64 @@ if [ -n "$4" ]; then
 		fLog '==> Cannot locate openssl.cnf';
 		exit 0;
 	fi
+	fLog '==> Located openssl.cnf in '"$openssl_cnf_path";
 fi
 
 tmp_dir='/tmp/__letsencrypt';
-working_dir="./signed-$1"
+working_dir="`dirname $0`"
+cert_dir="$working_dir"'/signed-'"$1"
 acme_base_dir="$3/.well-known"
 acme_dir="$3/.well-known/acme-challenge"
 
-if [ ! -f "./account.key" ]; then
+account_key_path="$working_dir"'/account.key'
+private_key_path="$cert_dir"'/server.key'
+csr_path="$cert_dir"'/'"$1"'.csr'
+crt_path="$cert_dir"'/'"$1"'.crt'
+
+if [ -f "$account_key_path" ]; then
+	fLog '==> Using account key: '"$account_key_path"
+else
 	echo '==> Generating account key';
-	openssl genrsa -out './account.key' 4096
+	openssl genrsa -out "$account_key_path" 4096
 fi
 
 mkdir -p "$tmp_dir"
 
 fLog '==> Downloading Let’s Encrypt Authority X3';
-curl -Ls 'https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem' > "$tmp_dir/intermediate.pem"
+curl -Ls 'https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem' > "$tmp_dir"'/intermediate.pem'
 
-fLog '==> Downloading acme-tiny';
-curl -Ls 'https://raw.githubusercontent.com/diafygi/acme-tiny/master/acme_tiny.py' > "$tmp_dir/acme_tiny.py"
+fLog '==> Downloading ISRG Root X1';
+curl -Ls 'https://letsencrypt.org/certs/isrgrootx1.pem' > "$tmp_dir"'/root.pem'
 
+fLog '==> Downloading ACME Tiny';
+curl -Ls 'https://raw.githubusercontent.com/diafygi/acme-tiny/master/acme_tiny.py' > "$tmp_dir"'/acme_tiny.py'
 
-fLog '==> Generating private key';
-mkdir -p "$working_dir"
-openssl genrsa -out "$working_dir/server.key" 4096
+mkdir -p "$cert_dir"
+
+if [ -f "$private_key_path" ]; then
+	fLog '==> Using private key: '"$private_key_path"
+else
+	fLog '==> Generating private key';
+	openssl genrsa -out "$private_key_path" 4096
+fi
 
 fLog '==> Generating CSR';
 if [ -z "$4" ]; then
-	openssl req -new -sha256 -key "$working_dir/server.key" -out "$working_dir/$1.csr" -subj "$2"
+	openssl req -new -sha256 -key "$private_key_path" -out "$csr_path" -subj "$2"
 else
-	cp "$openssl_cnf_path" "$tmp_dir/openssl.cnf"
-	echo "[SAN]\nsubjectAltName=$4" >> "$tmp_dir/openssl.cnf"
-	openssl req -new -sha256 -key "$working_dir/server.key" -out "$working_dir/$1.csr" -subj "$2" -reqexts SAN -config "$tmp_dir/openssl.cnf"
+	openssl req -new -sha256 -key "$private_key_path" -out "$csr_path" -subj "$2" \
+		-reqexts SAN \
+		-config <(cat $openssl_cnf_path \
+			<(printf "[SAN]\nsubjectAltName=$4"))
 fi
 
 fLog '==> Signing certificate';
 mkdir -p "$acme_dir"
-python "$tmp_dir/acme_tiny.py" --account-key './account.key' --csr "$working_dir/$1.csr" --acme-dir "$acme_dir" > "$working_dir/$1.crt"
+python "$tmp_dir"'/acme_tiny.py' --account-key "$account_key_path" --csr "$csr_path" --acme-dir "$acme_dir" > "$crt_path"
 
 fLog '==> Merging certificates';
-cat "$working_dir/$1.crt" "$tmp_dir/intermediate.pem" > "$working_dir/ssl-bundle.crt"
+cat "$crt_path" "$tmp_dir"'/intermediate.pem' > "$cert_dir"'/ssl-bundle.crt'
+cat "$tmp_dir"'/intermediate.pem' "$tmp_dir"'/root.pem' > "$cert_dir"'/ssl-chain.crt'
 
 fLog '==> Cleaning up';
 rm -rf "$tmp_dir"
